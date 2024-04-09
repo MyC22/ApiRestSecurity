@@ -8,34 +8,35 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Optional;
 
+@CrossOrigin(origins = "http://127.0.0.1:5500")
 @RestController
-@RequestMapping("/usuario")
+@RequestMapping("/api")
 public class UserController {
 
     @Autowired
     UserService userService;
 
-    @GetMapping
+    @GetMapping("/users")
     public ArrayList<UserModel> getUsers(){
         return userService.getUsers();
     }
 
-    @PostMapping
-    public UserModel saveUser(@RequestBody UserModel usuario){
-        return this.userService.saveUser(usuario);
+    @PostMapping("/saveUsers")
+    public UserModel saveUser(@RequestBody UserModel user){
+        return this.userService.saveUser(user);
     }
 
-    @GetMapping(path = "/{id}")
+    @GetMapping(path = "/user/{id}")
     public Optional<UserModel> getUserById(@PathVariable("id") Long id){
         return this.userService.getUserById(id);
     }
 
     @GetMapping("/query")
-    public ArrayList<UserModel> getUsersByPriority(@RequestParam("prioridad") Integer priority){
+    public ArrayList<UserModel> getUsersByPriority(@RequestParam("priority") Integer priority){
         return this.userService.getUserByPriority(priority);
     }
 
-    @DeleteMapping(path = "/{id}")
+    @DeleteMapping(path = "/delete/{id}")
     public String deleteUserById(@PathVariable("id") Long id){
         boolean ok = this.userService.deleteUserById(id);
         if (ok){

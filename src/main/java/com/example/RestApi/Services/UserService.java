@@ -18,8 +18,8 @@ public class UserService {
         return (ArrayList<UserModel>) userDao.findAll();
     }
 
-    public UserModel saveUser(UserModel usuario){
-        return userDao.save(usuario);
+    public UserModel saveUser(UserModel user){
+        return userDao.save(user);
     }
 
     public Optional<UserModel> getUserById(Long id){
@@ -28,6 +28,10 @@ public class UserService {
 
     public ArrayList<UserModel> getUserByPriority(Integer priority){
         return userDao.findByPriority(priority);
+    }
+
+    public UserModel verifyUser(String email, String password){
+        return userDao.verifyUser(email, password);
     }
 
     public boolean deleteUserById(Long id){
