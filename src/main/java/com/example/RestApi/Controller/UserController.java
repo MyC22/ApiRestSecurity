@@ -2,6 +2,7 @@ package com.example.RestApi.Controller;
 
 import com.example.RestApi.Model.UserModel;
 import com.example.RestApi.Services.UserService;
+import com.example.RestApi.Utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +17,30 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    JWTUtil jwtUtil;
+
     @GetMapping("/users")
-    public ArrayList<UserModel> getUsers(){
+    public ArrayList<UserModel> getUsers(@RequestHeader(value = "Authorization") String token){
+        if(!valiteToken(token)){
+          return null;
+        }
         return userService.getUsers();
+    }
+
+    private boolean valiteToken(String token){
+        String userId = jwtUtil.getKey(token); //obtener id del usuario
+        return userId != null; //si el usuario no es nullo va bien
     }
 
     @PostMapping("/saveUsers")
     public UserModel saveUser(@RequestBody UserModel user){
         return this.userService.saveUser(user);
+    }
+
+    @PostMapping("/register")
+    public UserModel registerUser(@RequestBody UserModel user){
+        return this.userService.registerUser(user);
     }
 
     @GetMapping(path = "/user/{id}")
@@ -37,12 +54,9 @@ public class UserController {
     }
 
     @DeleteMapping(path = "/delete/{id}")
-    public String deleteUserById(@PathVariable("id") Long id){
-        boolean ok = this.userService.deleteUserById(id);
-        if (ok){
-            return "Se elimino el usuario con el id " + id;
-        }else{
-            return "No se pudo eliminar el usuario con el id "+ id;
-        }
+    public void deleteUserById(@RequestHeader(value = "Authorization") String token , @PathVariable("id") Long id){
+        if(!valiteToken(token)){return;}
+        userService.deleteUserById(id);
+
     }
 }

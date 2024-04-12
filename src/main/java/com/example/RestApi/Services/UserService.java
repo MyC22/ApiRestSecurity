@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -30,8 +31,20 @@ public class UserService {
         return userDao.findByPriority(priority);
     }
 
-    public UserModel verifyUser(String email, String password){
-        return userDao.verifyUser(email, password);
+    public UserModel registerUser(UserModel user){
+        return userDao.save(user);
+    }
+
+    public UserModel getUserByCredentials(UserModel user){
+        List<UserModel> users = userDao.getUserByCredentials(user.getEmail(), user.getPassword());
+
+        if(users != null && !users.isEmpty()) {
+            // Si la lista no está vacía, se retorna el primer usuario encontrado
+            return users.get(0);
+        } else {
+            // Si la lista está vacía, no se encontró ningún usuario con esas credenciales
+            return null;
+        }
     }
 
     public boolean deleteUserById(Long id){
