@@ -23,7 +23,7 @@ public class AuthController {
     @Autowired
     private JWTUtil jwtUtil;
 
-    @PostMapping("log-in")
+    @PostMapping("/log-in")
     public ResponseEntity<AuthResponse> login(@RequestBody @Validated AuthLoginRequest userRequest){
         return new ResponseEntity<>(this.userDetailService.loginUser(userRequest), HttpStatus.OK);
 
@@ -34,8 +34,8 @@ public class AuthController {
 //        return "FAIL";
     }
 
-    @PostMapping("/register")
+    @PostMapping("/sing-up")
     public ResponseEntity<AuthResponse> register(@RequestBody AuthCreateUserRequest authCreateUser){
-        return new ResponseEntity<>(this.userDetailService.createUser(), HttpStatus.CREATED);
-//    }
+        return new ResponseEntity<>(this.userDetailService.createUser(authCreateUser), HttpStatus.CREATED);
+    }
 }

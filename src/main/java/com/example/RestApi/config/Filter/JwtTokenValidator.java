@@ -21,7 +21,6 @@ import java.util.Collection;
 
 public class JwtTokenValidator extends OncePerRequestFilter {
 
-
     private JWTUtil jwtUtil;
 
     public JwtTokenValidator(JWTUtil jwtUtil) {
