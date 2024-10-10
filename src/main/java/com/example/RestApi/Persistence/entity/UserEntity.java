@@ -22,6 +22,8 @@ public class UserEntity {
         @Column(unique = true)
         private String username;
         private String password;
+        private String email;
+        private int prioridad;
 
         @Column(name = "is_enabled")
         private boolean isEnabled;
@@ -37,6 +39,7 @@ public class UserEntity {
 
         @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
         @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+        @Builder.Default
         private Set<RoleEntity> roles = new HashSet<>();
 }
 

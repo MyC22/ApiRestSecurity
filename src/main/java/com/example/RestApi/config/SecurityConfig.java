@@ -48,7 +48,8 @@ public class SecurityConfig  {
                     http.requestMatchers(HttpMethod.POST, "/auth/**").permitAll();
 
                     //configure private endpoints
-                    http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");
+                    http.requestMatchers("/method/**").hasRole("ADMIN");
+//                    http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");
 
                     http.requestMatchers(HttpMethod.PATCH, "/method/patch").hasAnyAuthority("REFACTOR");
                     http.requestMatchers(HttpMethod.GET, "/method/get").hasAnyAuthority("READ");

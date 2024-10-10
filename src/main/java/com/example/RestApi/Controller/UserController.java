@@ -3,31 +3,35 @@ package com.example.RestApi.Controller;
 //import com.example.RestApi.Model.UserModel;
 //import com.example.RestApi.Services.UserService;
 //import com.example.RestApi.Utils.JWTUtil;
+import com.example.RestApi.Persistence.entity.UserEntity;
+import com.example.RestApi.Services.UserDetailServiceImpl;
+import com.example.RestApi.Utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Optional;
 
-@CrossOrigin(origins = "http://127.0.0.1:5500")
+//@CrossOrigin(origins = "http://127.0.0.1:5500")
 @RestController
 @RequestMapping("/method")
 public class UserController {
 
-//    @Autowired
-//    UserService userService;
+    @Autowired
+    UserDetailServiceImpl userService;
 
-    //@Autowired
-    //JWTUtil jwtUtil;
+    @Autowired
+    JWTUtil jwtUtil;
 
-//    @GetMapping("/users")
-//    public ArrayList<UserModel> getUsers(/*@RequestHeader(value = "Authorization") String token*/){
-//        /*if(tokenVal(token)){
-//          return null;
-//        }*/
-//        return userService.getUsers();
-//    }
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('DEVELOPER')")
+    public ArrayList<UserEntity> getUsers() {
+        return userService.getUsers();
+    }
+
 
     @GetMapping("/get")
     public String helloGet(){
@@ -76,10 +80,20 @@ public class UserController {
 //        return this.userService.getUserByPriority(priority);
 //    }
 //
-//    @DeleteMapping(path = "/delete/{id}")
-//    public void deleteUserById(/*@RequestHeader(value = "Authorization") String token ,*/ @PathVariable("id") Long id){
-//       // if(tokenVal(token)){return;}
-//        userService.deleteUserById(id);
+@DeleteMapping(path = "/delete/{id}")
+public ResponseEntity<String> deleteUserById(@PathVariable("id") Long id) {
+    Optional<UserEntity> userOptional = userService.getUserById(id);
+    if (userOptional.isPresent()) {
+        boolean isDeleted = userService.deleteUserById(id);
+        if (isDeleted) {
+            return ResponseEntity.ok("Usuario eliminado exitosamente");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar el usuario");
+        }
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+    }
+}
 
-   // }
+
 }

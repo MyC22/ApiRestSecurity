@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,17 +41,17 @@ public class UserDetailServiceImpl implements UserDetailsService {
     @Autowired
     private RoleRepository roleRepository;
 
-//    public ArrayList<UserModel> getUsers(){
-//        return (ArrayList<UserModel>) userDao.findAll();
-//    }
+    public ArrayList<UserEntity> getUsers(){
+        return (ArrayList<UserEntity>) userRepository.findAll();
+    }
 //
 //    public UserModel saveUser(UserModel user){
 //        return userDao.save(user);
 //    }
 //
-//    public Optional<UserModel> getUserById(Long id){
-//        return userDao.findById(id);
-//    }
+    public Optional<UserEntity> getUserById(Long id){
+        return userRepository.findById(id);
+    }
 //
 //    public ArrayList<UserModel> getUserByPriority(Integer priority){
 //        return userDao.findByPriority(priority);
@@ -60,14 +61,14 @@ public class UserDetailServiceImpl implements UserDetailsService {
 //        return userDao.save(user);
 //    }
 //
-//    public boolean deleteUserById(Long id){
-//        try {
-//            userDao.deleteById(id);
-//            return true;
-//        }catch (Exception err){
-//            return false;
-//        }
-//    }
+    public boolean deleteUserById(Long id){
+        try {
+            userRepository.deleteById(id);
+            return true;
+        }catch (Exception err){
+            return false;
+        }
+    }
 
 
     //find user in database
@@ -92,7 +93,7 @@ public class UserDetailServiceImpl implements UserDetailsService {
     }
 
     //Login user
-    public AuthResponse loginUser(AuthLoginRequest authLoginRequest){
+    public AuthResponse loginUser(AuthLoginRequest authLoginRequest) {
         String username = authLoginRequest.username();
         String password = authLoginRequest.password();
 
@@ -101,8 +102,15 @@ public class UserDetailServiceImpl implements UserDetailsService {
 
         String accessToken = jwtUtil.createToken(authentication);
 
-        return new AuthResponse(username, "User Logged succesfully", accessToken, true);
+        // Retrieve user ID from the database
+        UserEntity userEntity = userRepository.findUserEntityByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario " + username + " no existe"));
+
+        // Make sure userId is included here
+        return new AuthResponse(userEntity.getId(), userEntity.getUsername(), "User Logged successfully", userEntity.getEmail(), userEntity.getPrioridad(), accessToken, true);
     }
+
+
 
     //authentication method
     public Authentication authenticate(String username, String password){
@@ -121,6 +129,8 @@ public class UserDetailServiceImpl implements UserDetailsService {
     public AuthResponse createUser(AuthCreateUserRequest authCreateUserRequest){
         String username = authCreateUserRequest.username();
         String password = authCreateUserRequest.password();
+        String email = authCreateUserRequest.email();
+        int prioridad = authCreateUserRequest.prioridad();
         List<String> roleRequest = authCreateUserRequest.roleRequest().roleListName();
 
         //find roles that match the roles I am submitting in roleRequest
@@ -133,6 +143,8 @@ public class UserDetailServiceImpl implements UserDetailsService {
         UserEntity userEntity = UserEntity.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
+                .email(email)
+                .prioridad(prioridad)
                 .roles(roleEntitySet)
                 .accountNoLocked(true)
                 .accountNoExpired(true)
@@ -162,7 +174,7 @@ public class UserDetailServiceImpl implements UserDetailsService {
         String accessToken = jwtUtil.createToken(authentication);
 
         //Create the AuthResponse, it's in dto
-        AuthResponse authResponse = new AuthResponse(userCreated.getUsername(), "User Created Successfully", accessToken, true);
+        AuthResponse authResponse = new AuthResponse(userCreated.getId() ,userCreated.getUsername(), "User Created Successfully",  userEntity.getEmail(), userEntity.getPrioridad(), accessToken, true);
         return authResponse;
     }
 }
