@@ -11,4 +11,5 @@ import java.util.List;
 public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
 
     List<RoleEntity> findRoleEntitiesByRoleEnumIn(List<String> roleNames);
+
 }
