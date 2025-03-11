@@ -1,8 +1,10 @@
 package com.example.RestApi.Persistence.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,6 +27,10 @@ public class UserEntity {
         private String email;
         private int prioridad;
 
+        @Column(name = "disable_timestamp")
+        private LocalDateTime disableTimestamp;
+
+        @JsonProperty("isEnabled")
         @Column(name = "is_enabled")
         private boolean isEnabled;
 
@@ -37,10 +43,13 @@ public class UserEntity {
         @Column(name = "credential_No_Expired")
         private boolean credentialNoExpired;
 
-        @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-        @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+        @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+        @JoinTable(
+                name = "user_roles",
+                joinColumns = @JoinColumn(name = "user_id"),
+                inverseJoinColumns = @JoinColumn(name = "role_id")
+        )
         @Builder.Default
         private Set<RoleEntity> roles = new HashSet<>();
 }
-
 

@@ -1,5 +1,6 @@
 package com.example.RestApi.config;
 
+import com.example.RestApi.Services.AuthService;
 import com.example.RestApi.Services.UserDetailServiceImpl;
 import com.example.RestApi.Utils.JWTUtil;
 import com.example.RestApi.config.Filter.JwtTokenValidator;
@@ -48,8 +49,10 @@ public class SecurityConfig  {
                     http.requestMatchers(HttpMethod.POST, "/auth/**").permitAll();
 
                     //configure private endpoints
-                    http.requestMatchers("/method/**").hasRole("ADMIN");
-//                    http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");
+                    http.requestMatchers("/method/**").hasAnyRole("ADMIN");
+                    http.requestMatchers("/api/**").hasAuthority("ROLE_ADMIN");
+
+                    //http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");
 
                     http.requestMatchers(HttpMethod.PATCH, "/method/patch").hasAnyAuthority("REFACTOR");
                     http.requestMatchers(HttpMethod.GET, "/method/get").hasAnyAuthority("READ");
@@ -67,10 +70,10 @@ public class SecurityConfig  {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailServiceImpl userDetailService){
+    public AuthenticationProvider authenticationProvider(AuthService authService){
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
-        provider.setUserDetailsService(userDetailService);
+        provider.setUserDetailsService(authService);
         return provider;
     }
 

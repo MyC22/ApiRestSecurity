@@ -3,12 +3,23 @@ package com.example.RestApi.Controller.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
-public record AuthCreateUserRequest(@NotBlank String username,
-                             @NotBlank String password,
+import java.util.List;
 
-                             @NotBlank String email,
-
-                             @NotBlank int prioridad,
-                             @Valid AuthCreateRoleRequest roleRequest) {
-
+public record AuthCreateUserRequest(
+        @NotBlank String username,
+        @NotBlank String password,
+        @NotBlank String email,
+        @NotBlank int prioridad,
+        @Valid AuthCreateRoleRequest roleRequest
+) {
+    public AuthCreateUserRequest {
+        if (prioridad <= 0) {
+            prioridad = 1;
+        }
+        if (roleRequest == null) {
+            roleRequest = new AuthCreateRoleRequest(List.of("USER")); // Valor por defecto si es null
+        }
+    }
 }
+
+

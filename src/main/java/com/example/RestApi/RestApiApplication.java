@@ -1,7 +1,7 @@
 package com.example.RestApi;
 
+import com.example.RestApi.Persistence.Repository.UserRepository;
 import com.example.RestApi.Persistence.entity.PermissionEntity;
-import com.example.RestApi.Persistence.entity.Repository.UserRepository;
 import com.example.RestApi.Persistence.entity.RoleEntity;
 import com.example.RestApi.Persistence.entity.RoleEnum;
 import com.example.RestApi.Persistence.entity.UserEntity;
@@ -9,10 +9,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.List;
 import java.util.Set;
 
+@EnableScheduling
 @SpringBootApplication
 public class RestApiApplication {
 

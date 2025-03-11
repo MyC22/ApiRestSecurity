@@ -4,6 +4,7 @@ package com.example.RestApi.Controller;
 import com.example.RestApi.Controller.dto.AuthCreateUserRequest;
 import com.example.RestApi.Controller.dto.AuthLoginRequest;
 import com.example.RestApi.Controller.dto.AuthResponse;
+import com.example.RestApi.Services.AuthService;
 import com.example.RestApi.Services.UserDetailServiceImpl;
 import com.example.RestApi.Utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,24 +19,18 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     @Autowired
-    UserDetailServiceImpl userDetailService;
+    AuthService authService;
 
     @Autowired
     private JWTUtil jwtUtil;
 
     @PostMapping("/log-in")
     public ResponseEntity<AuthResponse> login(@RequestBody @Validated AuthLoginRequest userRequest){
-        return new ResponseEntity<>(this.userDetailService.loginUser(userRequest), HttpStatus.OK);
-
-//        UserModel userLogged = userService.getUserByCredentials(user);
-//        if(userLogged != null){
-//            return jwtUtil.create(String.valueOf(userLogged.getId()), userLogged.getEmail());
-//        }
-//        return "FAIL";
+        return new ResponseEntity<>(this.authService.loginUser(userRequest), HttpStatus.OK);
     }
 
     @PostMapping("/sing-up")
     public ResponseEntity<AuthResponse> register(@RequestBody AuthCreateUserRequest authCreateUser){
-        return new ResponseEntity<>(this.userDetailService.createUser(authCreateUser), HttpStatus.CREATED);
+        return new ResponseEntity<>(this.authService.createUser(authCreateUser), HttpStatus.CREATED);
     }
 }
