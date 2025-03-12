@@ -1,4 +1,4 @@
-package com.example.RestApi.Controller.dto;
+package com.example.RestApi.Controller.RecordDTO;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 

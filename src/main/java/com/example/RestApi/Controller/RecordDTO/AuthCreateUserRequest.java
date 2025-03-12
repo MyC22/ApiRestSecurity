@@ -1,4 +1,4 @@
-package com.example.RestApi.Controller.dto;
+package com.example.RestApi.Controller.RecordDTO;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

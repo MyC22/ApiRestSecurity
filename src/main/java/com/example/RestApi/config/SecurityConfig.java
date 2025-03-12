@@ -52,6 +52,8 @@ public class SecurityConfig  {
                     http.requestMatchers("/method/**").hasAnyRole("ADMIN");
                     http.requestMatchers("/api/**").hasAuthority("ROLE_ADMIN");
 
+                    http.requestMatchers("/log/audit/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_DEVELOPER");
+
                     //http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");
 
                     http.requestMatchers(HttpMethod.PATCH, "/method/patch").hasAnyAuthority("REFACTOR");

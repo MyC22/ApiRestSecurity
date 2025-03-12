@@ -1,4 +1,4 @@
-package com.example.RestApi.Controller.dto;
+package com.example.RestApi.Controller.RecordDTO;
 
 import jakarta.validation.constraints.Size;
 import org.springframework.validation.annotation.Validated;
