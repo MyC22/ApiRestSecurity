@@ -1,0 +1,38 @@
+package com.example.RestApi.repository;
+
+import com.example.RestApi.model.dto.NotUserDto;
+import com.example.RestApi.model.entity.RoleEntity;
+import com.example.RestApi.model.entity.UserEntity;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.factory.Mappers;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring")
+public interface UserMapper {
+
+    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
+
+    @Mapping(target = "roles", source = "roles", qualifiedByName = "mapRolesToEnums")
+    @Mapping(target = "permissions", source = "roles", qualifiedByName = "mapPermissionsToStrings")
+    @Mapping(source = "enabled", target = "isEnabled")
+    NotUserDto toDTO(UserEntity userEntity);
+
+    @Named("mapRolesToEnums")
+    default Set<String> mapRolesToEnums(Set<RoleEntity> roles) {
+        return roles.stream()
+                .map(role -> role.getRoleName().name()) // 🔹 Convertimos RoleEnum a String
+                .collect(Collectors.toSet());
+    }
+
+    @Named("mapPermissionsToStrings")
+    default Set<String> mapPermissionsToStrings(Set<RoleEntity> roles) {
+        return roles.stream()
+                .flatMap(role -> role.getPermissionList().stream())
+                .map(permission -> permission.getName())
+                .collect(Collectors.toSet());
+    }
+}
