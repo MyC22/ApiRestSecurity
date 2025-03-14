@@ -45,6 +45,8 @@ public class AuthService implements UserDetailsService {
     @Autowired
     private JWTUtil jwtUtil;
 
+    @Autowired
+    private AuditLogService auditLogService;
 
 
     public AuthResponse createUser(AuthCreateUserRequest authCreateUserRequest){
@@ -92,6 +94,11 @@ public class AuthService implements UserDetailsService {
 
         // Guardar usuario
         UserEntity userCreated = userRepository.save(userEntity);
+
+        auditLogService.logUserAction("CREATE", userCreated.getId(), userCreated.getUsername(), "Se creó un nuevo usuario.");
+
+        // 🔹 Registrar en auditoría
+
 
         // Crear lista de permisos
         ArrayList<SimpleGrantedAuthority> authorityList = new ArrayList<>();
@@ -156,6 +163,10 @@ public class AuthService implements UserDetailsService {
         // Retrieve user ID from the database
         UserEntity userEntity = userRepository.findUserEntityByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario " + username + " no existe"));
+
+        //Registrar en auditoría con detalles
+        auditLogService.logUserAction("LOGIN", userEntity.getId(), userEntity.getUsername(), "Inició sesión.");
+
 
         // Make sure userId is included here
         return new AuthResponse(userEntity.getId(), userEntity.getUsername(), "User Logged successfully", userEntity.getEmail(), userEntity.getPrioridad(), accessToken, true);

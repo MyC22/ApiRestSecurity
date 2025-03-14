@@ -1,8 +1,7 @@
 package com.example.RestApi.Controller;
 
 import com.example.RestApi.Persistence.DTO.UserDTO;
-import com.example.RestApi.Persistence.Repository.UserMapper;
-import com.example.RestApi.Persistence.entity.UserEntity;
+import com.example.RestApi.Persistence.Repository.Mappers.UserMapper;
 import com.example.RestApi.Services.UserDetailServiceImpl;
 import com.example.RestApi.Utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/method")

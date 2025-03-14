@@ -1,8 +1,7 @@
-package com.example.RestApi.Persistence.Repository;
+package com.example.RestApi.Persistence.Repository.Mappers;
 
 import com.example.RestApi.Persistence.DTO.UserDTO;
 import com.example.RestApi.Persistence.entity.RoleEntity;
-import com.example.RestApi.Persistence.entity.RoleEnum;
 import com.example.RestApi.Persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

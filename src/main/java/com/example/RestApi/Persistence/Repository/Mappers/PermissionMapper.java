@@ -1,4 +1,4 @@
-package com.example.RestApi.Persistence.Repository;
+package com.example.RestApi.Persistence.Repository.Mappers;
 
 import com.example.RestApi.Persistence.DTO.PermissionDTO;
 import com.example.RestApi.Persistence.entity.PermissionEntity;

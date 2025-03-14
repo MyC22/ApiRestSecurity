@@ -29,7 +29,7 @@ public class AuthController {
         return new ResponseEntity<>(this.authService.loginUser(userRequest), HttpStatus.OK);
     }
 
-    @PostMapping("/sing-up")
+    @PostMapping("/sign-up")
     public ResponseEntity<AuthResponse> register(@RequestBody AuthCreateUserRequest authCreateUser){
         return new ResponseEntity<>(this.authService.createUser(authCreateUser), HttpStatus.CREATED);
     }

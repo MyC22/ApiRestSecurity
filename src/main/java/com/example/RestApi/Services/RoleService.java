@@ -5,6 +5,9 @@ import com.example.RestApi.Exceptions.RoleNotAssignedException;
 import com.example.RestApi.Persistence.DTO.RoleDTO;
 import com.example.RestApi.Persistence.DTO.UserDTO;
 import com.example.RestApi.Persistence.Repository.*;
+import com.example.RestApi.Persistence.Repository.Mappers.PermissionMapper;
+import com.example.RestApi.Persistence.Repository.Mappers.RoleMapper;
+import com.example.RestApi.Persistence.Repository.Mappers.UserMapper;
 import com.example.RestApi.Persistence.entity.RoleEntity;
 import com.example.RestApi.Persistence.entity.RoleEnum;
 import com.example.RestApi.Persistence.entity.UserEntity;
@@ -30,6 +33,9 @@ public class RoleService {
     private RoleMapper roleMapper;
 
     @Autowired
+    private UserDetailServiceImpl userService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -37,6 +43,9 @@ public class RoleService {
 
     @Autowired
     private PermissionMapper permissionMapper;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     // 🔹 Obtener todos los roles
     public List<RoleDTO> getAllRoles() {
@@ -52,21 +61,13 @@ public class RoleService {
     }
 
     public Optional<UserDTO> addRoleToUser(Long userId, List<String> roleNames) {
-        Optional<UserEntity> userOptional = userRepository.findById(userId);
+        Optional<UserEntity> userOptional = userService.getUserById(userId);
 
         if (userOptional.isPresent()) {
             UserEntity user = userOptional.get();
 
             // Convertir nombres de roles a RoleEnum
-            List<RoleEnum> roleEnums = roleNames.stream()
-                    .map(roleName -> {
-                        try {
-                            return RoleEnum.valueOf(roleName);
-                        } catch (IllegalArgumentException e) {
-                            throw new IllegalArgumentException("Role " + roleName + " does not exist");
-                        }
-                    })
-                    .collect(Collectors.toList());
+            List<RoleEnum> roleEnums = convertToRoleEnums(roleNames);
 
             // Buscar los roles en la base de datos
             Set<RoleEntity> newRoles = new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(roleEnums));
@@ -76,8 +77,7 @@ public class RoleService {
             }
 
             // Verificar si ya tiene los roles
-            boolean alreadyHasRoles = user.getRoles().containsAll(newRoles);
-            if (alreadyHasRoles) {
+            if (user.getRoles().containsAll(newRoles)) {
                 throw new RoleAlreadyAssignedException("The user already has these roles assigned.");
             }
 
@@ -86,6 +86,12 @@ public class RoleService {
 
             // Guardar cambios
             UserEntity updatedUser = userRepository.save(user);
+
+            // 🔥 REGISTRAR AUDITORÍA PARA CADA ROL AGREGADO
+            for (RoleEntity role : newRoles) {
+                auditLogService.logUserAction("ADD_ROLE", userId, user.getUsername(),
+                        "Asignó el rol '" + role.getRoleName() + "'");
+            }
 
             // 🔹 🔥 ACTUALIZAR LA SESIÓN DEL USUARIO
             updateUserAuthorities(updatedUser);
@@ -98,21 +104,14 @@ public class RoleService {
 
 
 
+
     public Optional<UserDTO> removeRoleFromUser(Long userId, List<String> roleNames) {
-        Optional<UserEntity> userOptional = userRepository.findById(userId);
+        Optional<UserEntity> userOptional = userService.getUserById(userId);
 
         if (userOptional.isPresent()) {
             UserEntity user = userOptional.get();
 
-            List<RoleEnum> roleEnums = roleNames.stream()
-                    .map(roleName -> {
-                        try {
-                            return RoleEnum.valueOf(roleName);
-                        } catch (IllegalArgumentException e) {
-                            throw new IllegalArgumentException("Role " + roleName + " does not exist");
-                        }
-                    })
-                    .collect(Collectors.toList());
+            List<RoleEnum> roleEnums = convertToRoleEnums(roleNames);
 
             Set<RoleEntity> rolesToRemove = user.getRoles().stream()
                     .filter(role -> roleEnums.contains(role.getRoleName()))
@@ -128,6 +127,12 @@ public class RoleService {
             // Guardar cambios en la base de datos
             UserEntity updatedUser = userRepository.save(user);
 
+            // 🔥 REGISTRAR AUDITORÍA PARA CADA ROL ELIMINADO
+            for (RoleEntity role : rolesToRemove) {
+                auditLogService.logUserAction("REMOVE_ROLE", userId, user.getUsername(),
+                        "Eliminó el rol '" + role.getRoleName() + "'");
+            }
+
             // 🔥 🔹 ACTUALIZAR LA SESIÓN DEL USUARIO
             updateUserAuthorities(updatedUser);
 
@@ -136,6 +141,7 @@ public class RoleService {
 
         return Optional.empty();
     }
+
 
 
 
@@ -163,6 +169,20 @@ public class RoleService {
             SecurityContextHolder.getContext().setAuthentication(newAuth);
         }
     }
+
+    // Convertir nombres de roles a RoleEnum
+    private List<RoleEnum> convertToRoleEnums(List<String> roleNames) {
+        return roleNames.stream()
+                .map(roleName -> {
+                    try {
+                        return RoleEnum.valueOf(roleName);
+                    } catch (IllegalArgumentException e) {
+                        throw new IllegalArgumentException("Role " + roleName + " does not exist");
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
 
 
 }
