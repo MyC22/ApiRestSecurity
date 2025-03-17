@@ -1,7 +1,7 @@
 package com.example.RestApi.Controller;
 
-import com.example.RestApi.Persistence.DTO.UserDTO;
-import com.example.RestApi.Persistence.Repository.Mappers.UserMapper;
+import com.example.RestApi.model.dto.UserDTO;
+import com.example.RestApi.Mappers.UserMapper;
 import com.example.RestApi.Services.UserDetailServiceImpl;
 import com.example.RestApi.Utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;

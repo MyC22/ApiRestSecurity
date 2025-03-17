@@ -1,16 +1,11 @@
 package com.example.RestApi.Services;
 
-import com.example.RestApi.Controller.dto.AuthCreateUserRequest;
-import com.example.RestApi.Controller.dto.AuthLoginRequest;
-import com.example.RestApi.Controller.dto.AuthResponse;
-import com.example.RestApi.Exceptions.EmailAlreadyExistsException;
-import com.example.RestApi.Persistence.Repository.RoleRepository;
-import com.example.RestApi.Persistence.Repository.UserRepository;
-import com.example.RestApi.Persistence.entity.RoleEntity;
-import com.example.RestApi.Persistence.entity.RoleEnum;
-import com.example.RestApi.Persistence.entity.UserEntity;
+import com.example.RestApi.model.dto.UserDTO;
+import com.example.RestApi.model.common.AuthLoginRequest;
+import com.example.RestApi.model.common.AuthResponse;
+import com.example.RestApi.Repository.UserRepository;
+import com.example.RestApi.model.entity.UserEntity;
 import com.example.RestApi.Utils.JWTUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,119 +19,31 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @Service
 public class AuthService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final JWTUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JWTUtil jwtUtil;
-
-    @Autowired
-    private AuditLogService auditLogService;
-
-
-    public AuthResponse createUser(AuthCreateUserRequest authCreateUserRequest){
-
-        if (userRepository.existsByEmail(authCreateUserRequest.email())) {
-            throw new EmailAlreadyExistsException("The email " + authCreateUserRequest.email() + " is already in use.");
-        }
-
-        String username = authCreateUserRequest.username();
-        String password = authCreateUserRequest.password();
-        String email = authCreateUserRequest.email();
-        int prioridad = authCreateUserRequest.prioridad();
-
-        List<String> roleNames = authCreateUserRequest.roleRequest().roleListName();
-
-        // Convertir los nombres de roles a RoleEnum
-        List<RoleEnum> roleEnums = roleNames.stream()
-                .map(roleName -> {
-                    try {
-                        return RoleEnum.valueOf(roleName);
-                    } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException("Role " + roleName + " does not exist");
-                    }
-                })
-                .collect(Collectors.toList());
-
-        // Buscar los roles en la base de datos
-        Set<RoleEntity> roleEntitySet = new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(roleEnums));
-
-        if (roleEntitySet.isEmpty()) {
-            throw new IllegalArgumentException("The roles specified do not exist");
-        }
-
-        UserEntity userEntity = UserEntity.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
-                .email(email)
-                .prioridad(prioridad)
-                .roles(roleEntitySet)
-                .accountNoLocked(true)
-                .accountNoExpired(true)
-                .credentialNoExpired(true)
-                .isEnabled(true)
-                .build();
-
-        // Guardar usuario
-        UserEntity userCreated = userRepository.save(userEntity);
-
-        auditLogService.logUserAction("CREATE", userCreated.getId(), userCreated.getUsername(), "Se creó un nuevo usuario.");
-
-        // 🔹 Registrar en auditoría
-
-
-        // Crear lista de permisos
-        ArrayList<SimpleGrantedAuthority> authorityList = new ArrayList<>();
-        userCreated.getRoles().stream()
-                .flatMap(role -> role.getPermissionList().stream())
-                .forEach(permission -> authorityList.add(new SimpleGrantedAuthority(permission.getName())));
-
-        // Autenticar usuario
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userCreated.getUsername(), userCreated.getPassword(), authorityList);
-
-        // Generar token
-        String accessToken = jwtUtil.createToken(authentication);
-
-        // Respuesta de autenticación
-        return new AuthResponse(
-                userCreated.getId(),
-                userCreated.getUsername(),
-                "User Created Successfully",
-                userEntity.getEmail(),
-                userEntity.getPrioridad(),
-                accessToken,
-                true);
+    public AuthService(UserRepository userRepository, JWTUtil jwtUtil,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    //find user in database
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findUserEntityByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario " + username + " no existe"));
 
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
-
-        // Agregar roles
         userEntity.getRoles().forEach(role ->
-                authorityList.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name()))); // 🔹 Se usa name() de RoleEnum
-
-        // Agregar permisos
+                authorityList.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name())));
         userEntity.getRoles().stream()
                 .flatMap(role -> role.getPermissionList().stream())
                 .forEach(permission -> authorityList.add(new SimpleGrantedAuthority(permission.getName())));
@@ -150,39 +57,42 @@ public class AuthService implements UserDetailsService {
                 authorityList);
     }
 
-    //Login user
-    public AuthResponse loginUser(AuthLoginRequest authLoginRequest) {
-        String username = authLoginRequest.username();
-        String password = authLoginRequest.password();
 
-        Authentication authentication = this.authenticate(username, password);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String accessToken = jwtUtil.createToken(authentication);
-
-        // Retrieve user ID from the database
-        UserEntity userEntity = userRepository.findUserEntityByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("El usuario " + username + " no existe"));
-
-        //Registrar en auditoría con detalles
-        auditLogService.logUserAction("LOGIN", userEntity.getId(), userEntity.getUsername(), "Inició sesión.");
-
-
-        // Make sure userId is included here
-        return new AuthResponse(userEntity.getId(), userEntity.getUsername(), "User Logged successfully", userEntity.getEmail(), userEntity.getPrioridad(), accessToken, true);
-    }
-
-    //authentication method
-    public Authentication authenticate(String username, String password){
+    // Método para autenticar usuario
+    public Authentication authenticate(String username, String password) {
         UserDetails userDetails = this.loadUserByUsername(username);
 
-        if(userDetails == null){
-            throw new BadCredentialsException("Invalid username or password");
-        }
-        if (!passwordEncoder.matches(password, userDetails.getPassword())){
+        if (!passwordEncoder.matches(password, userDetails.getPassword())) {
             throw new BadCredentialsException("Invalid Password");
         }
 
         return new UsernamePasswordAuthenticationToken(username, userDetails.getPassword(), userDetails.getAuthorities());
+    }
+
+    // Método para generar la respuesta de autenticación
+    public AuthResponse generateAuthResponse(UserEntity userEntity, String message) {
+        // Crear lista de permisos
+        ArrayList<SimpleGrantedAuthority> authorityList = new ArrayList<>();
+        userEntity.getRoles().stream()
+                .flatMap(role -> role.getPermissionList().stream())
+                .forEach(permission -> authorityList.add(new SimpleGrantedAuthority(permission.getName())));
+
+        // Autenticar usuario
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userEntity.getUsername(), userEntity.getPassword(), authorityList);
+
+        // Generar token JWT
+        String accessToken = jwtUtil.createToken(authentication);
+
+        // Devolver la respuesta con los datos del usuario
+        return new AuthResponse(
+                userEntity.getId(),
+                userEntity.getUsername(),
+                message,
+                userEntity.getEmail(),
+                userEntity.getPrioridad(),
+                accessToken,
+                true
+        );
     }
 }

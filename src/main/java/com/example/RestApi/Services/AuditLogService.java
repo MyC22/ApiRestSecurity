@@ -1,10 +1,10 @@
 package com.example.RestApi.Services;
 
-import com.example.RestApi.Persistence.DTO.AuditLogDto;
-import com.example.RestApi.Persistence.Repository.Mappers.AuditLogMapper;
-import com.example.RestApi.Persistence.Repository.AuditLogRepository;
-import com.example.RestApi.Persistence.entity.AuditLogEntity;
-import com.example.RestApi.Persistence.entity.UserEntity;
+import com.example.RestApi.model.dto.AuditLogRecord;
+import com.example.RestApi.Mappers.AuditLogMapper;
+import com.example.RestApi.Repository.AuditLogRepository;
+import com.example.RestApi.model.entity.AuditLogEntity;
+import com.example.RestApi.model.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class AuditLogService {
         registerAudit(action, "User", userId, fullDetails);
     }
 
-    public List<AuditLogDto> getAllLogs() {
+    public List<AuditLogRecord> getAllLogs() {
         return auditLogRepository.findAll().stream()
                 .map(auditLogMapper::toDto)
                 .toList();

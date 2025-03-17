@@ -1,7 +1,7 @@
 package com.example.RestApi.Controller;
 
-import com.example.RestApi.Persistence.DTO.RoleDTO;
-import com.example.RestApi.Persistence.DTO.UserDTO;
+import com.example.RestApi.model.dto.RoleDTO;
+import com.example.RestApi.model.dto.UserDTO;
 import com.example.RestApi.Services.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

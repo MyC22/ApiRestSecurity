@@ -1,9 +1,9 @@
 package com.example.RestApi.Services;
 
-import com.example.RestApi.Persistence.DTO.UserDTO;
-import com.example.RestApi.Persistence.Repository.Mappers.UserMapper;
-import com.example.RestApi.Persistence.Repository.UserRepository;
-import com.example.RestApi.Persistence.entity.UserEntity;
+import com.example.RestApi.model.dto.UserDTO;
+import com.example.RestApi.Mappers.UserMapper;
+import com.example.RestApi.Repository.UserRepository;
+import com.example.RestApi.model.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
