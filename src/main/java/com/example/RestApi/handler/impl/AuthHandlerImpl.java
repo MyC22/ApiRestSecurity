@@ -54,19 +54,19 @@ public class AuthHandlerImpl implements AuthHandler {
         commonDto.setUsername(request.username());
         commonDto.setPassword(request.password());
 
-        // 1️⃣ Recuperar los detalles del usuario desde DBService
+        //Recuperar los detalles del usuario desde DBService
         UserDetails userDetails = fetchUserDetails(commonDto);
 
-        // 2️⃣ Autenticar al usuario
+        //Autenticar al usuario
         Authentication authentication = authService.authenticate(userDetails.getUsername(), commonDto.getPassword());
 
-        // 🔹 Establecer el SecurityContextHolder después de la autenticación
+        //Establecer el SecurityContextHolder después de la autenticación
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 3️⃣ Generar el token de acceso
+        //Generar el token de acceso
         createUserAccessToken(authentication, commonDto);
 
-        // 4️⃣ Devolver la respuesta con datos del usuario y el token
+        //Devolver la respuesta con datos del usuario y el token
         return new AuthResponse(
                 commonDto.getUserDto().getId(),
                 commonDto.getUserDto().getUsername(),
@@ -78,11 +78,9 @@ public class AuthHandlerImpl implements AuthHandler {
         );
     }
 
-
-
     private void createUserAccessToken(Authentication authentication, LoginUserCommonDto commonDto) {
         try {
-            commonDto.setAccessToken(jwtUtil.createToken(authentication)); // Asegúrate de que jwtUtil es un atributo de la clase
+            commonDto.setAccessToken(jwtUtil.createToken(authentication));
             UserDTO performedBy = userDBService.findAuthenticatedUser();
 
             AuditLogDto auditLogDto = new AuditLogDto();
@@ -106,12 +104,12 @@ private UserDetails fetchUserDetails(LoginUserCommonDto commonDto) {
 
     List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
 
-    // Agregar roles con prefijo "ROLE_"
+    //Agregar roles con prefijo "ROLE_"
     userDto.getRoles().forEach(role ->
             authorityList.add(new SimpleGrantedAuthority("ROLE_" + role))
     );
 
-    // Agregar permisos directamente
+    //Agregar permisos directamente
     userDto.getPermissions().forEach(permission ->
             authorityList.add(new SimpleGrantedAuthority(permission))
     );

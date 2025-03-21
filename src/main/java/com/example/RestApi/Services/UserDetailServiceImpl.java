@@ -31,9 +31,7 @@ public class UserDetailServiceImpl  {
                 .collect(Collectors.toList());
     }
 
-    public Optional<UserEntity> getUserById(Long id){
-        return userRepository.findById(id);
-    }
+
 
 public boolean disableUserById(Long id) {
     Optional<UserEntity> userOptional = userRepository.findById(id);

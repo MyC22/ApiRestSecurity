@@ -42,7 +42,6 @@ public class JWTUtil {
 //     */
    public String createToken(Authentication authentication) {
 
-        // The JWT signature algorithm used to sign the token
        Algorithm algorithm = Algorithm.HMAC256(this.privatekey);
 
        String username = authentication.getPrincipal().toString();

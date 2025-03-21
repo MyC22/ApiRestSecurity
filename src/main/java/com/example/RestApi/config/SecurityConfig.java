@@ -51,6 +51,7 @@ public class SecurityConfig  {
                     //configure private endpoints
                     http.requestMatchers("/method/**").hasAnyRole("ADMIN");
                     http.requestMatchers("/api/**").hasAuthority("ROLE_ADMIN");
+                    http.requestMatchers("/users/**").hasAuthority("ROLE_ADMIN");
 
                     http.requestMatchers("/log/audit/**").hasAuthority("ROLE_ADMIN");
 

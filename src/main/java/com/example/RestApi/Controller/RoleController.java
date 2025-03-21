@@ -1,5 +1,6 @@
 package com.example.RestApi.Controller;
 
+import com.example.RestApi.handler.impl.RoleHandlerImpl;
 import com.example.RestApi.model.dto.RoleDTO;
 import com.example.RestApi.model.dto.UserDTO;
 import com.example.RestApi.Services.RoleService;
@@ -16,39 +17,34 @@ import java.util.Optional;
 public class RoleController {
 
     @Autowired
-    private RoleService roleService;
+    private RoleHandlerImpl roleHandler;
 
     // Obtener todos los roles
     @GetMapping
     public ResponseEntity<List<RoleDTO>> getAllRoles() {
-        List<RoleDTO> roles = roleService.getAllRoles();
+        List<RoleDTO> roles = roleHandler.getAllRoles();
         return ResponseEntity.ok(roles);
     }
 
-    // Obtener un rol por su ID
     @GetMapping("/{id}")
     public ResponseEntity<RoleDTO> getRoleById(@PathVariable Long id) {
-        Optional<RoleDTO> role = roleService.getRoleById(id);
-        return role.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        RoleDTO role = roleHandler.getRoleById(id);
+        return ResponseEntity.ok(role);
     }
+
 
     @PutMapping("/{userId}/add-role")
     public ResponseEntity<UserDTO> addRoleToUser(@PathVariable Long userId, @RequestBody Map<String, List<String>> roleRequest) {
-        List<String> roleNames = roleRequest.get("roles");  // Extraer la lista de roles desde el JSON
-        Optional<UserDTO> updatedUser = roleService.addRoleToUser(userId, roleNames);
-
-        return updatedUser.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        List<String> roleNames = roleRequest.get("roles");
+        UserDTO updatedUser = roleHandler.addRoleToUser(userId, roleNames);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @PutMapping("/{userId}/remove-role")
     public ResponseEntity<UserDTO> removeRoleFromUser(@PathVariable Long userId, @RequestBody Map<String, List<String>> roleRequest) {
-        List<String> roleNames = roleRequest.get("roles");  // Extraer la lista de roles desde el JSON
-        Optional<UserDTO> updatedUser = roleService.removeRoleFromUser(userId, roleNames);
-
-        return updatedUser.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        List<String> roleNames = roleRequest.get("roles");
+        UserDTO updatedUser = roleHandler.removeRoleFromUser(userId, roleNames);
+        return ResponseEntity.ok(updatedUser);
     }
 
 }

@@ -48,141 +48,83 @@ public class RoleService {
     @Autowired
     private AuditLogService auditLogService;
 
-    // 🔹 Obtener todos los roles
-    public List<RoleDTO> getAllRoles() {
-        return roleRepository.findAll().stream()
-                .map(roleMapper::toDTO)
-                .collect(Collectors.toList());
-    }
 
-    // 🔹 Obtener un rol por su ID
-    public Optional<RoleDTO> getRoleById(Long id) {
-        return roleRepository.findById(id)
-                .map(roleMapper::toDTO);
-    }
+    public Optional<UserDTO> addRoleToUser(UserEntity user, List<String> roleNames) {
+        // Convertir nombres de roles a RoleEnum
+        List<RoleEnum> roleEnums = convertToRoleEnums(roleNames);
 
-    public Optional<UserDTO> addRoleToUser(Long userId, List<String> roleNames) {
-        Optional<UserEntity> userOptional = userService.getUserById(userId);
+        // Buscar los roles en la base de datos
+        Set<RoleEntity> newRoles = new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(roleEnums));
 
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
-
-            // Convertir nombres de roles a RoleEnum
-            List<RoleEnum> roleEnums = convertToRoleEnums(roleNames);
-
-            // Buscar los roles en la base de datos
-            Set<RoleEntity> newRoles = new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(roleEnums));
-
-            if (newRoles.isEmpty()) {
-                throw new IllegalArgumentException("The specified roles do not exist");
-            }
-
-            // Verificar si ya tiene los roles
-            if (user.getRoles().containsAll(newRoles)) {
-                throw new RoleAlreadyAssignedException("The user already has these roles assigned.");
-            }
-
-            // Agregar los nuevos roles sin reemplazar los existentes
-            user.getRoles().addAll(newRoles);
-
-            // Guardar cambios
-            UserEntity updatedUser = userRepository.save(user);
-
-            // 🔥 REGISTRAR AUDITORÍA PARA CADA ROL AGREGADO
-            for (RoleEntity role : newRoles) {
-                auditLogService.logUserAction("ADD_ROLE", userId, user.getUsername(),
-                        "Asignó el rol '" + role.getRoleName() + "'");
-            }
-
-            // 🔹 🔥 ACTUALIZAR LA SESIÓN DEL USUARIO
-            updateUserAuthorities(updatedUser);
-
-            return Optional.of(userMapper.toDTO(updatedUser));
+        if (newRoles.isEmpty()) {
+            throw new IllegalArgumentException("The specified roles do not exist");
         }
 
-        return Optional.empty();
-    }
-
-
-
-
-    public Optional<UserDTO> removeRoleFromUser(Long userId, List<String> roleNames) {
-        Optional<UserEntity> userOptional = userService.getUserById(userId);
-
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
-
-            List<RoleEnum> roleEnums = convertToRoleEnums(roleNames);
-
-            Set<RoleEntity> rolesToRemove = user.getRoles().stream()
-                    .filter(role -> roleEnums.contains(role.getRoleName()))
-                    .collect(Collectors.toSet());
-
-            if (rolesToRemove.isEmpty()) {
-                throw new RoleNotAssignedException("The specified roles are not assigned to the user");
-            }
-
-            // 🔹 Eliminar roles
-            user.getRoles().removeAll(rolesToRemove);
-
-            // Guardar cambios en la base de datos
-            UserEntity updatedUser = userRepository.save(user);
-
-            // 🔥 REGISTRAR AUDITORÍA PARA CADA ROL ELIMINADO
-            for (RoleEntity role : rolesToRemove) {
-                auditLogService.logUserAction("REMOVE_ROLE", userId, user.getUsername(),
-                        "Eliminó el rol '" + role.getRoleName() + "'");
-            }
-
-            // 🔥 🔹 ACTUALIZAR LA SESIÓN DEL USUARIO
-            updateUserAuthorities(updatedUser);
-
-            return Optional.of(userMapper.toDTO(updatedUser));
+        // Verificar si ya tiene los roles
+        if (user.getRoles().containsAll(newRoles)) {
+            throw new RoleAlreadyAssignedException("The user already has these roles assigned.");
         }
 
-        return Optional.empty();
+        // Agregar los nuevos roles sin reemplazar los existentes
+        user.getRoles().addAll(newRoles);
+
+        // Guardar cambios
+        UserEntity updatedUser = userRepository.save(user);
+
+        // Registrar auditoría para cada rol agregado
+        newRoles.forEach(role -> auditLogService.logUserAction("ADD_ROLE", user.getId(), user.getUsername(),
+                "Asignó el rol '" + role.getRoleName() + "'"));
+
+        return Optional.of(userMapper.toDTO(updatedUser));
     }
 
 
+    public Optional<UserDTO> removeRoleFromUser(UserEntity user, List<String> roleNames) {
+        // Convertir nombres de roles a RoleEnum
+        List<RoleEnum> roleEnums = convertToRoleEnums(roleNames);
 
+        // Buscar los roles en la base de datos
+        Set<RoleEntity> rolesToRemove = new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(roleEnums));
 
-    private void updateUserAuthorities(UserEntity user) {
-        List<SimpleGrantedAuthority> updatedAuthorities = new ArrayList<>();
-
-        // Agregar roles actualizados
-        user.getRoles().forEach(role ->
-                updatedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name())));
-
-        // Agregar permisos actualizados
-        user.getRoles().stream()
-                .flatMap(role -> role.getPermissionList().stream())
-                .forEach(permission -> updatedAuthorities.add(new SimpleGrantedAuthority(permission.getName())));
-
-        // Obtener la autenticación actual
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-            // Crear nueva autenticación con los roles actualizados
-            UserDetails updatedUserDetails = new User(user.getUsername(), user.getPassword(), updatedAuthorities);
-            Authentication newAuth = new UsernamePasswordAuthenticationToken(updatedUserDetails, authentication.getCredentials(), updatedAuthorities);
-
-            // Reemplazar la autenticación en el contexto de seguridad
-            SecurityContextHolder.getContext().setAuthentication(newAuth);
+        if (rolesToRemove.isEmpty()) {
+            throw new IllegalArgumentException("The specified roles do not exist");
         }
+
+        // Verificar que el usuario tenga estos roles antes de eliminarlos
+        if (!user.getRoles().containsAll(rolesToRemove)) {
+            throw new RoleNotAssignedException("The user does not have all the specified roles.");
+        }
+
+        // Eliminar los roles
+        user.getRoles().removeAll(rolesToRemove);
+
+        // Guardar cambios en la base de datos
+        UserEntity updatedUser = userRepository.save(user);
+
+        // Registrar auditoría
+        rolesToRemove.forEach(role -> auditLogService.logUserAction("REMOVE_ROLE", user.getId(), user.getUsername(),
+                "Removió el rol '" + role.getRoleName() + "'"));
+
+        return Optional.of(userMapper.toDTO(updatedUser));
     }
 
-    // Convertir nombres de roles a RoleEnum
+
+    /**
+     * Convierte una lista de nombres de roles en una lista de RoleEnum.
+     */
     private List<RoleEnum> convertToRoleEnums(List<String> roleNames) {
         return roleNames.stream()
-                .map(roleName -> {
-                    try {
-                        return RoleEnum.valueOf(roleName);
-                    } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException("Role " + roleName + " does not exist");
-                    }
-                })
+                .map(RoleEnum::valueOf)
                 .collect(Collectors.toList());
     }
+
+
+
+
+
+
+
+
 
 
 

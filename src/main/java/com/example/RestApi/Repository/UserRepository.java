@@ -17,10 +17,4 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByIsEnabledTrue();   // Para obtener usuarios activos
     List<UserEntity> findByIsEnabledFalse();
 
-//    @Query("SELECT u FROM UserEntity u WHERE u.username = ?")
-//    Optional<UserEntity> findUsers(String username);
-
-//    @Query("SELECT u FROM UserModel u WHERE u.email = :email AND u.password = :password")
-//    public List<UserModel> getUserByCredentials(@Param("email") String email, @Param("password") String password);
-
 }

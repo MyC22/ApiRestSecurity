@@ -17,11 +17,11 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
     private final AuditLogMapper auditLogMapper;
-    private final UserDetailServiceImpl userDetailService;//Inyectamos SecurityUtilx
+    private final UserDetailServiceImpl userDetailService;
 
     public void registerAudit(String action, String entity, Long entityId, String details) {
         try {
-            UserEntity performedBy = userDetailService.getAuthenticatedUser(); // Obtenemos el usuario autenticado
+            UserEntity performedBy = userDetailService.getAuthenticatedUser(); //Obtenemos el usuario autenticado
 
             AuditLogEntity logEntry = AuditLogEntity.create(action, entity, entityId, performedBy, details);
             auditLogRepository.save(logEntry);

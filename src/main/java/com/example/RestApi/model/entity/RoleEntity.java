@@ -20,7 +20,7 @@ public class RoleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING) // 🔹 Guardamos el enum como String en la BD
+    @Enumerated(EnumType.STRING) //Guardar el enum como String en la BD
     @Column(name = "role_name", unique = true, nullable = false)
     private RoleEnum roleName;
 

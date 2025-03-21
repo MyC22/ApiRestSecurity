@@ -28,7 +28,7 @@ public class AuditLogEntity {
 
     @ManyToOne
     @JoinColumn(name = "performed_by_id")
-    private UserEntity performedBy; //usuario que realizo la acción
+    private UserEntity performedBy;
 
 
 
@@ -37,7 +37,7 @@ public class AuditLogEntity {
         this.entity = entity;
         this.entityId = entityId;
         this.performedBy = performedBy;
-        this.timestamp = LocalDateTime.now(); // Se asigna el timestamp automáticamente
+        this.timestamp = LocalDateTime.now();
     }
 
     public static AuditLogEntity create(String action, String entity, Long entityId, UserEntity performedBy, String details) {

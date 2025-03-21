@@ -19,7 +19,7 @@ public interface PermissionMapper {
     // Convertir de DTO a Entity
     PermissionEntity toEntity(PermissionDTO permissionDTO);
 
-    // Para listas de permisos
+    // Listas de permisos
     default Set<PermissionDTO> toDTOSet(Set<PermissionEntity> permissionEntities) {
         return permissionEntities.stream()
                 .map(this::toDTO)

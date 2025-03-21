@@ -9,9 +9,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface AuditLogMapper {
 
-    @Mapping(target = "performedBy", source = "performedBy.username") // Extrae solo el username
+    @Mapping(target = "performedBy", source = "performedBy.username")
     AuditLogRecord toDto(AuditLogEntity entity);
 
-    @Mapping(target = "performedBy", ignore = true) // Ajusta según la estructura de tu entidad
+    @Mapping(target = "performedBy", ignore = true)
     AuditLogEntity mapAuditLogDtoToEntity(AuditLogDto dto);
 }
