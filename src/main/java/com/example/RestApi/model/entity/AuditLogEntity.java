@@ -31,7 +31,6 @@ public class AuditLogEntity {
     private UserEntity performedBy;
 
 
-
     public AuditLogEntity(String action, String entity, Long entityId, UserEntity performedBy) {
         this.action = action;
         this.entity = entity;

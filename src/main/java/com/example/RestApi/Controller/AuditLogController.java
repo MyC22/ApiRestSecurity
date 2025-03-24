@@ -1,7 +1,7 @@
 package com.example.RestApi.Controller;
 
-import com.example.RestApi.model.dto.AuditLogRecord;
 import com.example.RestApi.Services.AuditLogService;
+import com.example.RestApi.model.dto.AuditLogDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,7 @@ public class AuditLogController {
     private AuditLogService auditLogService;
 
     @GetMapping("/logs")
-    public ResponseEntity<List<AuditLogRecord>> getAllAuditLogs(){
+    public ResponseEntity<List<AuditLogDto>> getAllAuditLogs(){
         return ResponseEntity.ok(auditLogService.getAllLogs());
     }
 }

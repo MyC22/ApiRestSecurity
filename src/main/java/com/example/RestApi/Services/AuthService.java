@@ -1,7 +1,6 @@
 package com.example.RestApi.Services;
 
 import com.example.RestApi.model.dto.UserDTO;
-import com.example.RestApi.model.common.AuthLoginRequest;
 import com.example.RestApi.model.common.AuthResponse;
 import com.example.RestApi.Repository.UserRepository;
 import com.example.RestApi.model.entity.UserEntity;
@@ -10,7 +9,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -69,30 +67,60 @@ public class AuthService implements UserDetailsService {
         return new UsernamePasswordAuthenticationToken(username, userDetails.getPassword(), userDetails.getAuthorities());
     }
 
-    // Método para generar la respuesta de autenticación
-    public AuthResponse generateAuthResponse(UserEntity userEntity, String message) {
+    public UserDetails buildUserDetails(UserDTO userDto) {
+        List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
+
+        userDto.getRoles().forEach(role ->
+                authorityList.add(new SimpleGrantedAuthority("ROLE_" + role))
+        );
+
+        userDto.getPermissions().forEach(permission ->
+                authorityList.add(new SimpleGrantedAuthority(permission))
+        );
+
+        return new User(
+                userDto.getUsername(),
+                userDto.getPassword(),
+                userDto.isEnabled(),
+                userDto.isAccountNoExpired(),
+                userDto.isCredentialNoExpired(),
+                userDto.isAccountNoLocked(),
+                authorityList
+        );
+    }
+
+
+    // Metodo para generar la respuesta de autenticacion
+
+    public AuthResponse generateAuthResponse(UserDTO userDTO, String message) {
         // Crear lista de permisos
         ArrayList<SimpleGrantedAuthority> authorityList = new ArrayList<>();
-        userEntity.getRoles().stream()
-                .flatMap(role -> role.getPermissionList().stream())
-                .forEach(permission -> authorityList.add(new SimpleGrantedAuthority(permission.getName())));
+
+        // Agregar roles con prefijo "ROLE_"
+        userDTO.getRoles().forEach(role ->
+                authorityList.add(new SimpleGrantedAuthority("ROLE_" + role)));
+
+        // Agregar permisos directamente
+        userDTO.getPermissions().forEach(permission ->
+                authorityList.add(new SimpleGrantedAuthority(permission)));
 
         // Autenticar usuario
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userEntity.getUsername(), userEntity.getPassword(), authorityList);
+                userDTO.getUsername(), userDTO.getPassword(), authorityList);
 
         // Generar token JWT
         String accessToken = jwtUtil.createToken(authentication);
 
         // Devolver la respuesta con los datos del usuario
         return new AuthResponse(
-                userEntity.getId(),
-                userEntity.getUsername(),
+                userDTO.getId(),
+                userDTO.getUsername(),
                 message,
-                userEntity.getEmail(),
-                userEntity.getPrioridad(),
+                userDTO.getEmail(),
+                userDTO.getPrioridad(),
                 accessToken,
                 true
         );
     }
+
 }

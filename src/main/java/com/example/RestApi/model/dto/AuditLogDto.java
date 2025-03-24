@@ -1,17 +1,19 @@
 package com.example.RestApi.model.dto;
 
-import com.example.RestApi.model.entity.UserEntity;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
-@Data
-public class AuditLogDto {
-
-    private Long id;
-    private String action;
-    private String entity;
-    private Long entityId;
-    private UserEntity performedBy;
-    private LocalDateTime timestamp;
+@Builder
+public record AuditLogDto(
+        Long id,
+        String action,
+        String entity,
+        Long entityId,
+        String details,
+        String performedBy,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime timestamp
+) {
 }

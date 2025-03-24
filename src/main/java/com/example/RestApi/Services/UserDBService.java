@@ -6,8 +6,8 @@ import com.example.RestApi.Exceptions.RoleNotAssignedException;
 import com.example.RestApi.Mappers.AuditLogMapper;
 import com.example.RestApi.Mappers.RoleMapper;
 import com.example.RestApi.Mappers.UserMapper;
-import com.example.RestApi.model.dto.AuditLogDto;
 import com.example.RestApi.model.common.AuthCreateUserRequest;
+import com.example.RestApi.model.dto.AuditLogDto;
 import com.example.RestApi.model.dto.RoleDTO;
 import com.example.RestApi.model.dto.UserDTO;
 import com.example.RestApi.Repository.AuditLogRepository;
@@ -50,7 +50,18 @@ public class UserDBService {
         return userRepository.findById(id);
     }
 
-    public UserEntity createUser(AuthCreateUserRequest request) {
+    public Optional<UserDTO> saveUser(UserEntity user) {
+        UserEntity savedUser = userRepository.save(user);
+        return Optional.of(userMapper.toDTO(savedUser));
+    }
+
+    public UserDTO convertToDTO(UserEntity userEntity) {
+        return userMapper.toDTO(userEntity);
+    }
+
+
+
+    public UserDTO createUser(AuthCreateUserRequest request) {
         Set<RoleEntity> roles = new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(
                 request.roleRequest().roleListName().stream().map(RoleEnum::valueOf).collect(Collectors.toList())
         ));
@@ -67,7 +78,8 @@ public class UserDBService {
                 .isEnabled(true)
                 .build();
 
-        return userRepository.save(user);
+        userRepository.save(user);
+        return userMapper.toDTO(user);
     }
 
     public UserDTO findUserByUsername(String username) {
@@ -117,40 +129,49 @@ public class UserDBService {
                 .map(roleMapper::toDTO);
     }
 
+    public Set<RoleEntity> findRolesByNames(List<String> roleNames) {
+        List<RoleEnum> roleEnums = roleNames.stream()
+                .map(RoleEnum::valueOf)
+                .toList();
+        return new HashSet<>(roleRepository.findRoleEntitiesByRoleNameIn(roleEnums));
+    }
+
+
     public Optional<UserEntity> addRoleToUser(Long userId, Set<RoleEntity> newRoles) {
         Optional<UserEntity> userOptional = getUserById(userId);
-
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
-
-            // Agregar los nuevos roles sin reemplazar los existentes
-            user.getRoles().addAll(newRoles);
-
-            // Guardar cambios
-            return Optional.of(userRepository.save(user));
+        if (userOptional.isEmpty()) {
+            return Optional.empty(); // Usuario no encontrado
         }
 
-        return Optional.empty();
+        UserEntity user = userOptional.get();
+
+
+        // 🔹 Añadir los nuevos roles
+        user.getRoles().addAll(newRoles);
+        UserEntity updatedUser = userRepository.save(user);
+
+        return Optional.of(updatedUser);
     }
 
 
-    public Optional<UserDTO> removeRoleFromUser(Long userId, Set<RoleEntity> rolesToRemove) {
+
+    public Optional<UserEntity> removeRoleFromUser(Long userId, Set<RoleEntity> rolesToRemove) {
         Optional<UserEntity> userOptional = getUserById(userId);
-
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
-
-            //Eliminar roles
-            user.getRoles().removeAll(rolesToRemove);
-
-            // Guardar cambios en la base de datos
-            UserEntity updatedUser = userRepository.save(user);
-
-
-            return Optional.of(userMapper.toDTO(updatedUser));
+        if (userOptional.isEmpty()) {
+            return Optional.empty(); // Usuario no encontrado
         }
 
-        return Optional.empty();
+        UserEntity user = userOptional.get();
+
+
+        // 🔹 Eliminar los roles
+        user.getRoles().removeAll(rolesToRemove);
+        UserEntity updatedUser = userRepository.save(user);
+
+        return Optional.of(updatedUser);
     }
+
+
+
 
 }

@@ -1,6 +1,6 @@
 package com.example.RestApi.Services;
 
-import com.example.RestApi.model.dto.AuditLogRecord;
+import com.example.RestApi.model.dto.AuditLogDto;
 import com.example.RestApi.Mappers.AuditLogMapper;
 import com.example.RestApi.Repository.AuditLogRepository;
 import com.example.RestApi.model.entity.AuditLogEntity;
@@ -37,7 +37,7 @@ public class AuditLogService {
         registerAudit(action, "User", userId, fullDetails);
     }
 
-    public List<AuditLogRecord> getAllLogs() {
+    public List<AuditLogDto> getAllLogs() {
         return auditLogRepository.findAll().stream()
                 .map(auditLogMapper::toDto)
                 .toList();

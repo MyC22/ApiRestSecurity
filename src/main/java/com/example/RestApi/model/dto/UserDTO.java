@@ -26,5 +26,5 @@ public class UserDTO {
     private boolean credentialNoExpired;
 
     private Set<String> roles;
-    private Set<String> permissions;  // 🔹 Nueva propiedad para permisos
+    private Set<String> permissions;
 }

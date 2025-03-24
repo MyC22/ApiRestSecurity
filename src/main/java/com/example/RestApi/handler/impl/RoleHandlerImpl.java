@@ -1,10 +1,12 @@
 package com.example.RestApi.handler.impl;
 
+import com.example.RestApi.Services.AuditLogService;
 import com.example.RestApi.Services.RoleService;
 import com.example.RestApi.Services.UserDBService;
 import com.example.RestApi.handler.RoleHandler;
 import com.example.RestApi.model.dto.RoleDTO;
 import com.example.RestApi.model.dto.UserDTO;
+import com.example.RestApi.model.entity.RoleEntity;
 import com.example.RestApi.model.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 @Component(value = "roleHandlerImpl")
 @AllArgsConstructor(onConstructor_ = @__(@Autowired))
@@ -26,6 +28,7 @@ public class RoleHandlerImpl implements RoleHandler {
 
     private UserDBService userDBService;
     private RoleService roleService;
+    private AuditLogService auditLogService;
 
     @Override
     public List<RoleDTO> getAllRoles() {
@@ -40,66 +43,72 @@ public class RoleHandlerImpl implements RoleHandler {
 
     @Override
     public UserDTO addRoleToUser(Long userId, List<String> roleNames) {
-        Optional<UserEntity> userEntityOpt = userDBService.getUserById(userId);
+        UserEntity user = userDBService.getUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        if (userEntityOpt.isEmpty()) {
-            throw new RuntimeException("User not found");
+        Set<RoleEntity> rolesToAdd = userDBService.findRolesByNames(roleNames);
+        if (rolesToAdd.isEmpty()) {
+            throw new RuntimeException("No valid roles found to add: " + roleNames);
         }
 
-        UserEntity user = userEntityOpt.get();
+        roleService.validateRolesNotAssigned(user.getRoles(), rolesToAdd);
 
-        //Delegar lógica a RoleService
-        Optional<UserDTO> updatedUserOpt = roleService.addRoleToUser(user, roleNames);
+        UserEntity updatedUserEntity = userDBService.addRoleToUser(userId, rolesToAdd)
+                .orElseThrow(() -> new RuntimeException("Failed to add roles to user"));
 
-        if (updatedUserOpt.isEmpty()) {
-            throw new RuntimeException("Failed to assign roles");
-        }
+        roleNames.forEach(roleName -> auditLogService.logUserAction(
+                "ADD_ROLE",
+                userId,
+                user.getUsername(),
+                "Se añadió el rol '" + roleName + "'"
+        ));
 
-        //ACTUALIZAR LA SESIÓN DEL USUARIO
-        updateUserAuthorities(user);
-
-        return updatedUserOpt.get();
+        updateUserAuthorities(updatedUserEntity);
+        return userDBService.convertToDTO(updatedUserEntity);
     }
-
 
     @Override
     public UserDTO removeRoleFromUser(Long userId, List<String> roleNames) {
-        Optional<UserEntity> userOptional = userDBService.getUserById(userId);
+        UserEntity user = userDBService.getUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        if (userOptional.isEmpty()) {
-            throw new RuntimeException("User not found");
+        Set<RoleEntity> rolesToRemove = userDBService.findRolesByNames(roleNames);
+        if (rolesToRemove.isEmpty()) {
+            throw new RuntimeException("No valid roles found to remove: " + roleNames);
         }
 
-        UserEntity user = userOptional.get();
+        // Validar si los roles están asignados antes de eliminarlos
+        roleService.validateRolesAssigned(user.getRoles(), rolesToRemove);
 
-        Optional<UserDTO> updatedUserOpt = roleService.removeRoleFromUser(user, roleNames);
+        UserEntity updatedUserEntity = userDBService.removeRoleFromUser(userId, rolesToRemove)
+                .orElseThrow(() -> new RuntimeException("Failed to remove roles from user"));
 
-        if (updatedUserOpt.isEmpty()) {
-            throw new RuntimeException("Roles not assigned to the user");
-        }
+        roleNames.forEach(roleName -> auditLogService.logUserAction(
+                "REMOVE_ROLE",
+                userId,
+                user.getUsername(),
+                "Se eliminó el rol '" + roleName + "'"
+        ));
 
-        UserDTO updatedUser = updatedUserOpt.get();
-
-        //ACTUALIZAR LA SESIÓN DEL USUARIO
-        updateUserAuthorities(user);
-
-        return updatedUser;
+        updateUserAuthorities(updatedUserEntity);
+        return userDBService.convertToDTO(updatedUserEntity);
     }
+
 
 
     private void updateUserAuthorities(UserEntity user) {
         List<SimpleGrantedAuthority> updatedAuthorities = new ArrayList<>();
 
-        //Agregar roles actualizados
+        // Agregar roles actualizados
         user.getRoles().forEach(role ->
                 updatedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name())));
 
-        //Agregar permisos actualizados
+        // Agregar permisos actualizados
         user.getRoles().stream()
                 .flatMap(role -> role.getPermissionList().stream())
                 .forEach(permission -> updatedAuthorities.add(new SimpleGrantedAuthority(permission.getName())));
 
-        //Obtener la autenticación actual
+        // Obtener la autenticación actual
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
