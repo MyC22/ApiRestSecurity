@@ -14,6 +14,8 @@ public record AuditLogDto(
         String details,
         String performedBy,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime timestamp
+        LocalDateTime timestamp,
+        String status,
+        boolean isCritical
 ) {
 }

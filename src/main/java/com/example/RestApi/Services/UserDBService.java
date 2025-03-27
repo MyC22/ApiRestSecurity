@@ -18,11 +18,14 @@ import com.example.RestApi.model.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -92,27 +95,6 @@ public class UserDBService {
     }
 
 
-    public UserDTO findAuthenticatedUser() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            log.error("No authenticated user found in SecurityContext.");
-            throw new UsernameNotFoundException("Authenticated user not found");
-        }
-
-        String authenticatedUsername = authentication.getName();
-        log.info("Authenticated user: {}", authenticatedUsername);
-
-        return userRepository.findUserEntityByUsername(authenticatedUsername)
-                .map(userMapper::toDTO)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + authenticatedUsername));
-    }
-
-
-    public void saveAuthenticatedUserLog(AuditLogDto auditLogDto) {
-        auditLogRepository.save(auditLogMapper.mapAuditLogDtoToEntity(auditLogDto));
-    }
-
 
     //RoleService
 
@@ -146,13 +128,12 @@ public class UserDBService {
         UserEntity user = userOptional.get();
 
 
-        // 🔹 Añadir los nuevos roles
+        //Añadir los nuevos roles
         user.getRoles().addAll(newRoles);
         UserEntity updatedUser = userRepository.save(user);
 
         return Optional.of(updatedUser);
     }
-
 
 
     public Optional<UserEntity> removeRoleFromUser(Long userId, Set<RoleEntity> rolesToRemove) {
@@ -164,12 +145,76 @@ public class UserDBService {
         UserEntity user = userOptional.get();
 
 
-        // 🔹 Eliminar los roles
+        //Eliminar los roles
         user.getRoles().removeAll(rolesToRemove);
         UserEntity updatedUser = userRepository.save(user);
 
         return Optional.of(updatedUser);
     }
+
+    public void logUserAction(String action, UserDTO user, Long id, String description, boolean success, boolean isCritical) {
+        String performedBy = "SYSTEM";
+        try {
+            try {
+                performedBy = findAuthenticatedUser().getUsername();
+            } catch (Exception e) {
+                log.warn("No authenticated user found, using 'SYSTEM'.");
+            }
+
+            // Construcción del objeto de auditoría
+            AuditLogDto auditLogDto = new AuditLogDto(
+                    null,
+                    action,
+                    "User",
+                    id != null ? id : (user != null ? user.getId() : null),
+                    description,
+                    performedBy,
+                    LocalDateTime.now(),
+                    success ? "SUCCESS" : "FAILURE",
+                    isCritical
+            );
+
+            // Guardar el registro de auditoría
+            saveAuthenticatedUserLog(auditLogDto);
+
+            log.info("Audit log registered: {} - {} (ID: {}) by {} - Status: {}",
+                    auditLogDto.action(), auditLogDto.entity(),
+                    auditLogDto.entityId(), auditLogDto.performedBy(), auditLogDto.status());
+
+        } catch (Exception e) {
+            log.error("Error registering audit log: {}", e.getMessage(), e);
+        }
+    }
+
+    public void logUserAction(String action, UserDTO user, Long id, String description, boolean success) {
+        logUserAction(action, user, id, description, success, false);
+    }
+
+    public void saveAuthenticatedUserLog(AuditLogDto auditLogDto) {
+        auditLogRepository.save(auditLogMapper.mapAuditLogDtoToEntity(auditLogDto));
+    }
+
+
+
+    public UserDTO findAuthenticatedUser() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.error("No authenticated user found in SecurityContext.");
+            throw new UsernameNotFoundException("Authenticated user not found");
+        }
+
+        String authenticatedUsername = authentication.getName();
+        log.info("Authenticated user: {}", authenticatedUsername);
+
+        return userRepository.findUserEntityByUsername(authenticatedUsername)
+                .map(userMapper::toDTO)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + authenticatedUsername));
+    }
+
+
+
+
 
 
 

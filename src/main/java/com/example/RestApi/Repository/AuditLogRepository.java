@@ -8,4 +8,8 @@ import java.util.List;
 public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> {
 
     List<AuditLogEntity> findTop10ByOrderByTimestampDesc();
+
+    List<AuditLogEntity> findByIsCriticalTrue();
+
+
 }

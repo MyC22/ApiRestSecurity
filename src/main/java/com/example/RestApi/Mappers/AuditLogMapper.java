@@ -8,9 +8,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface AuditLogMapper {
 
-    @Mapping(target = "performedBy", source = "performedBy.username")
+    @Mapping(target = "performedBy", source = "performedBy")
     AuditLogDto toDto(AuditLogEntity entity);
 
-    @Mapping(target = "performedBy", ignore = true)
     AuditLogEntity mapAuditLogDtoToEntity(AuditLogDto dto);
+
 }

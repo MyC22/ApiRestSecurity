@@ -24,7 +24,7 @@ public interface UserMapper {
     @Named("mapRolesToEnums")
     default Set<String> mapRolesToEnums(Set<RoleEntity> roles) {
         return roles.stream()
-                .map(role -> role.getRoleName().name()) // 🔹 Convertimos RoleEnum a String
+                .map(role -> role.getRoleName().name()) //Convertimos RoleEnum a String
                 .collect(Collectors.toSet());
     }
 

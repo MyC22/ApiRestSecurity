@@ -27,10 +27,10 @@ public class RoleService {
         }
     }
 
-    /**
-     * Valida si los roles a eliminar están realmente asignados al usuario.
-     * Lanza una excepción si algún rol no está asignado.
-     */
+
+     //Valida si los roles a eliminar están realmente asignados al usuario.
+     //Lanza una excepción si algún rol no está asignado.
+
     public void validateRolesAssigned(Set<RoleEntity> existingRoles, Set<RoleEntity> rolesToRemove) {
         List<String> missingRoles = rolesToRemove.stream()
                 .map(role -> role.getRoleName().name())
@@ -44,9 +44,8 @@ public class RoleService {
         }
     }
 
-    /**
-     * Convierte una lista de nombres de roles en una lista de RoleEnum.
-     */
+
+     //Convierte una lista de nombres de roles en una lista de RoleEnum.
     public List<RoleEnum> convertToRoleEnums(List<String> roleNames) {
         return roleNames.stream()
                 .map(RoleEnum::valueOf)

@@ -1,54 +1,45 @@
 package com.example.RestApi.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "audit_logs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class AuditLogEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String action; // "Created", "Update", "Delete"
-    private String entity; // "User", "Role"
+    private String action; // CREATE, LOGIN, DELETE_ROLE, etc.
+    private String entity;
+    private Long entityId;
     private String details;
-    private Long entityId; //ID del objeto afectado
+    private String performedBy;
     private LocalDateTime timestamp;
 
-    @ManyToOne
-    @JoinColumn(name = "performed_by_id")
-    private UserEntity performedBy;
+    @Column(nullable = false)
+    private String status;
 
+    @Column(nullable = false)
+    private boolean isCritical = false;
 
-    public AuditLogEntity(String action, String entity, Long entityId, UserEntity performedBy) {
-        this.action = action;
-        this.entity = entity;
-        this.entityId = entityId;
-        this.performedBy = performedBy;
-        this.timestamp = LocalDateTime.now();
+    public static AuditLogEntity create(String action, String entity, Long entityId, UserEntity user, String details, String status, boolean isCritical) {
+        return AuditLogEntity.builder()
+                .action(action)
+                .entity(entity)
+                .entityId(entityId)
+                .details(details)
+                .performedBy(user.getUsername())
+                .timestamp(LocalDateTime.now())
+                .status(status)
+                .isCritical(isCritical)
+                .build();
     }
-
-    public static AuditLogEntity create(String action, String entity, Long entityId, UserEntity performedBy, String details) {
-        AuditLogEntity auditLog = new AuditLogEntity();
-        auditLog.setAction(action);
-        auditLog.setEntity(entity);
-        auditLog.setEntityId(entityId);
-        auditLog.setPerformedBy(performedBy);
-        auditLog.setDetails(details);
-        auditLog.setTimestamp(LocalDateTime.now());
-        return auditLog;
-    }
-
-
 }

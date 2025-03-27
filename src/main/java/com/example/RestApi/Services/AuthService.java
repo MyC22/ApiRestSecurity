@@ -56,16 +56,15 @@ public class AuthService implements UserDetailsService {
     }
 
 
-    // Método para autenticar usuario
-    public Authentication authenticate(String username, String password) {
-        UserDetails userDetails = this.loadUserByUsername(username);
-
+    // Método para autenticar usuario con UserDetails
+    public Authentication authenticate(UserDetails userDetails, String password) {
         if (!passwordEncoder.matches(password, userDetails.getPassword())) {
             throw new BadCredentialsException("Invalid Password");
         }
 
-        return new UsernamePasswordAuthenticationToken(username, userDetails.getPassword(), userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
     }
+
 
     public UserDetails buildUserDetails(UserDTO userDto) {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();

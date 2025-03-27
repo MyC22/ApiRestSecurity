@@ -17,25 +17,7 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
     private final AuditLogMapper auditLogMapper;
-    private final UserDetailServiceImpl userDetailService;
 
-    public void registerAudit(String action, String entity, Long entityId, String details) {
-        try {
-            UserEntity performedBy = userDetailService.getAuthenticatedUser(); //Obtenemos el usuario autenticado
-
-            AuditLogEntity logEntry = AuditLogEntity.create(action, entity, entityId, performedBy, details);
-            auditLogRepository.save(logEntry);
-            log.info("Audit log registered: {} - {} (ID: {}) by {} - Details: {}",
-                    action, entity, entityId, performedBy.getUsername(), details);
-        } catch (Exception e) {
-            log.error("Error registering audit log: {}", e.getMessage(), e);
-        }
-    }
-
-    public void logUserAction(String action, Long userId, String username, String details) {
-        String fullDetails = String.format("Usuario: %s (ID: %d) - %s", username, userId, details);
-        registerAudit(action, "User", userId, fullDetails);
-    }
 
     public List<AuditLogDto> getAllLogs() {
         return auditLogRepository.findAll().stream()

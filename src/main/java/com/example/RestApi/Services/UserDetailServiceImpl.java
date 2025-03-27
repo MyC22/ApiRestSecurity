@@ -32,7 +32,6 @@ public class UserDetailServiceImpl  {
     }
 
 
-
 public boolean disableUserById(Long id) {
     Optional<UserEntity> userOptional = userRepository.findById(id);
     if (userOptional.isPresent()) {
@@ -66,24 +65,6 @@ public boolean disableUserById(Long id) {
         }
     }
 
-    public UserEntity getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("No authenticated user found");
-        }
-
-        Object principal = authentication.getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails) principal).getUsername();
-        } else {
-            username = principal.toString();
-        }
-
-        return userRepository.findUserEntityByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
-    }
 
 
 

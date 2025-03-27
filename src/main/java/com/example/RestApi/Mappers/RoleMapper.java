@@ -11,13 +11,13 @@ public interface RoleMapper {
 
     RoleMapper INSTANCE = Mappers.getMapper(RoleMapper.class);
 
-    // Mapea RoleEntity a RoleDTO
-    @Mapping(target = "roleName", source = "roleName") // 🔹 Actualizado
+    //RoleEntity a RoleDTO
+    @Mapping(target = "roleName", source = "roleName")
     @Mapping(target = "permissionList", source = "permissionList")
     RoleDTO toDTO(RoleEntity roleEntity);
 
-    // Mapea RoleDTO a RoleEntity
-    @Mapping(target = "roleName", source = "roleName") // 🔹 Actualizado
+    //RoleDTO a RoleEntity
+    @Mapping(target = "roleName", source = "roleName")
     @Mapping(target = "permissionList", source = "permissionList")
     RoleEntity toEntity(RoleDTO roleDTO);
 }

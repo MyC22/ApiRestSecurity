@@ -16,7 +16,7 @@ import java.util.Set;
 public class RoleDTO {
 
     private Long id;
-    private RoleEnum roleName; // 🔹 Cambiado de String a RoleEnum
+    private RoleEnum roleName;
 
     @Builder.Default
     private Set<PermissionDTO> permissionList = new HashSet<>();
