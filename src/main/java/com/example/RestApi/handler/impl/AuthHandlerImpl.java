@@ -42,7 +42,6 @@ public class AuthHandlerImpl implements AuthHandler {
         boolean isCritical = newUser.getRoles().contains(RoleEnum.ADMIN) || newUser.getRoles().contains(RoleEnum.DEVELOPER);
         userDBService.logUserAction("CREATE", newUser, null,
                 "Se ha creado un nuevo usuario: " + newUser.getUsername(), true, isCritical);
-
         log.info("Nuevo usuario creado: {} (ID: {})", newUser.getUsername(), newUser.getId());
         return authService.generateAuthResponse(newUser, "User Created Successfully");
     }
@@ -56,23 +55,17 @@ public class AuthHandlerImpl implements AuthHandler {
         try {
             // Obtener detalles del usuario
             UserDetails userDetails = fetchUserDetails(commonDto);
-
             // Autenticar usuario con los detalles ya obtenidos
             Authentication authentication = authService.authenticate(userDetails, commonDto.getPassword());
-
             // Establecer el contexto de seguridad
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
             // Generar token de acceso
             commonDto.setAccessToken(jwtUtil.createToken(authentication));
-
             // Registrar log de inicio de sesión exitoso
             UserDTO performedBy = userDBService.findAuthenticatedUser();
             userDBService.logUserAction("LOGIN", performedBy, null, "Inicio de sesión exitoso", true);
-
             // Devolver respuesta de autenticación
             return authService.generateAuthResponse(commonDto.getUserDto(), "User logged successfully");
-
         } catch (Exception e) {
             userDBService.logUserAction("LOGIN", null, null,
                     "Intento fallido de inicio de sesión para el usuario: " + request.username(), false, true);

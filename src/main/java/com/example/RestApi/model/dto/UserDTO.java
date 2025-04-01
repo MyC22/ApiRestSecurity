@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -27,4 +28,6 @@ public class UserDTO {
 
     private Set<String> roles;
     private Set<String> permissions;
+
+    private List<TaskDTO> tasks;
 }

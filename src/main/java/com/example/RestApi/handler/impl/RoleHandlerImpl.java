@@ -47,19 +47,15 @@ public class RoleHandlerImpl implements RoleHandler {
         try {
             UserEntity user = userDBService.getUserById(userId)
                     .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
-
             Set<RoleEntity> rolesToAdd = userDBService.findRolesByNames(roleNames);
             if (rolesToAdd.isEmpty()) {
                 userDBService.logUserAction("ADD_ROLE", userDBService.convertToDTO(user), userId,
                         "Intento fallido: No se encontró el rol '" + roleNames + "'", false, true);
                 throw new RoleNotFoundException("No valid roles found to add: " + roleNames);
             }
-
             roleService.validateRolesNotAssigned(user.getRoles(), rolesToAdd);
-
             UserEntity updatedUserEntity = userDBService.addRoleToUser(userId, rolesToAdd)
                     .orElseThrow(() -> new RoleAssignmentException("Failed to add roles to user"));
-
             roleNames.forEach(roleName -> userDBService.logUserAction(
                     "ADD_ROLE",
                     userDBService.convertToDTO(user),
@@ -86,19 +82,15 @@ public class RoleHandlerImpl implements RoleHandler {
         try {
             UserEntity user = userDBService.getUserById(userId)
                     .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
-
             Set<RoleEntity> rolesToRemove = userDBService.findRolesByNames(roleNames);
             if (rolesToRemove.isEmpty()) {
                 userDBService.logUserAction("ADD_ROLE", userDBService.convertToDTO(user), userId,
                         "Intento fallido: No se encontró el rol '" + roleNames + "'", false, true);
                 throw new RoleNotFoundException("No valid roles found to remove: " + roleNames);
             }
-
             roleService.validateRolesAssigned(user.getRoles(), rolesToRemove);
-
             UserEntity updatedUserEntity = userDBService.removeRoleFromUser(userId, rolesToRemove)
                     .orElseThrow(() -> new RuntimeException("Failed to remove roles from user"));
-
             roleNames.forEach(roleName -> userDBService.logUserAction(
                     "REMOVE_ROLE",
                     userDBService.convertToDTO(user),
@@ -106,7 +98,6 @@ public class RoleHandlerImpl implements RoleHandler {
                     "Se eliminó el rol '" + roleName + "'",
                     true
             ));
-
             updateUserAuthorities(updatedUserEntity);
             return userDBService.convertToDTO(updatedUserEntity);
         }catch (UserNotFoundException | RoleNotFoundException | RoleAssignmentException e){
@@ -122,14 +113,11 @@ public class RoleHandlerImpl implements RoleHandler {
 
     private void updateUserAuthorities(UserEntity user) {
         List<SimpleGrantedAuthority> updatedAuthorities = new ArrayList<>();
-
         user.getRoles().forEach(role ->
                 updatedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName().name())));
-
         user.getRoles().stream()
                 .flatMap(role -> role.getPermissionList().stream())
                 .forEach(permission -> updatedAuthorities.add(new SimpleGrantedAuthority(permission.getName())));
-
         // Obtener la autenticación actual
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

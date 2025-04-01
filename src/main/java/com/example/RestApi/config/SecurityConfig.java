@@ -52,7 +52,7 @@ public class SecurityConfig  {
                     http.requestMatchers("/method/**").hasAnyRole("ADMIN");
                     http.requestMatchers("/api/**").hasAuthority("ROLE_ADMIN");
                     http.requestMatchers("/users/**").hasAuthority("ROLE_ADMIN");
-
+                    http.requestMatchers("/task/**").hasAuthority("ROLE_ADMIN");
                     http.requestMatchers("/log/audit/**").hasAuthority("ROLE_ADMIN");
 
                     //http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");

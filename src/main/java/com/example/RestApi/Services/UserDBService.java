@@ -1,29 +1,30 @@
 package com.example.RestApi.Services;
 
 import com.example.RestApi.Enums.RoleEnum;
-import com.example.RestApi.Exceptions.RoleAlreadyAssignedException;
-import com.example.RestApi.Exceptions.RoleNotAssignedException;
 import com.example.RestApi.Mappers.AuditLogMapper;
 import com.example.RestApi.Mappers.RoleMapper;
+import com.example.RestApi.Mappers.TaskMapper;
 import com.example.RestApi.Mappers.UserMapper;
+import com.example.RestApi.Repository.TaskRepository;
 import com.example.RestApi.model.common.AuthCreateUserRequest;
 import com.example.RestApi.model.dto.AuditLogDto;
 import com.example.RestApi.model.dto.RoleDTO;
+import com.example.RestApi.model.dto.TaskDTO;
 import com.example.RestApi.model.dto.UserDTO;
 import com.example.RestApi.Repository.AuditLogRepository;
 import com.example.RestApi.Repository.RoleRepository;
 import com.example.RestApi.Repository.UserRepository;
 import com.example.RestApi.model.entity.RoleEntity;
+import com.example.RestApi.model.entity.TaskEntity;
 import com.example.RestApi.model.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -40,10 +41,12 @@ public class UserDBService {
     private UserRepository userRepository;
     private RoleRepository roleRepository;
     private AuditLogRepository auditLogRepository;
+    private TaskRepository taskRepository;
     private PasswordEncoder passwordEncoder;
     private UserMapper userMapper;
     private AuditLogMapper auditLogMapper;
     private RoleMapper roleMapper;
+    private TaskMapper taskMapper;
 
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
@@ -53,13 +56,17 @@ public class UserDBService {
         return userRepository.findById(id);
     }
 
-    public Optional<UserDTO> saveUser(UserEntity user) {
+    public void saveUser(UserEntity user) {
         UserEntity savedUser = userRepository.save(user);
-        return Optional.of(userMapper.toDTO(savedUser));
+        userMapper.toDTO(savedUser);
     }
 
     public UserDTO convertToDTO(UserEntity userEntity) {
         return userMapper.toDTO(userEntity);
+    }
+
+    public List<UserEntity> getAllusers(){
+        return userRepository.findAll();
     }
 
 
@@ -122,7 +129,7 @@ public class UserDBService {
     public Optional<UserEntity> addRoleToUser(Long userId, Set<RoleEntity> newRoles) {
         Optional<UserEntity> userOptional = getUserById(userId);
         if (userOptional.isEmpty()) {
-            return Optional.empty(); // Usuario no encontrado
+            return Optional.empty();
         }
 
         UserEntity user = userOptional.get();
@@ -211,6 +218,27 @@ public class UserDBService {
                 .map(userMapper::toDTO)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + authenticatedUsername));
     }
+
+    //TASK SERVICE
+    @Transactional
+    public TaskDTO assignTaskToUser(Long userId, TaskDTO taskDTO) {
+        Optional<UserEntity> userOptional = getUserById(userId);
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("Usuario no encontrado con el ID: " + userId);
+        }
+
+        UserEntity user = userOptional.get();
+
+        TaskEntity taskEntity = taskMapper.toEntity(taskDTO);
+        taskEntity.setTaskStatus(false);
+        taskRepository.save(taskEntity);
+
+        user.getTasks().add(taskEntity);
+        saveUser(user);
+
+        return taskMapper.toDto(taskEntity);
+    }
+
 
 
 
