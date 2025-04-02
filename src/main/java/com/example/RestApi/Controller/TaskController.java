@@ -1,6 +1,5 @@
 package com.example.RestApi.Controller;
 
-import com.example.RestApi.handler.TaskHandler;
 import com.example.RestApi.handler.impl.TaskHandlerImpl;
 import com.example.RestApi.model.dto.TaskDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,12 @@ public class TaskController {
     public ResponseEntity<TaskDTO> assignTaskToUser(@PathVariable Long userId, @RequestBody TaskDTO taskDTO) {
         TaskDTO assignedTask = taskHandler.assignTaskToUser(userId, taskDTO);
         return new ResponseEntity<>(assignedTask, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        System.out.println("API TaskController está funcionando");
+        return ResponseEntity.ok("TaskController funcionando!");
     }
 
 }

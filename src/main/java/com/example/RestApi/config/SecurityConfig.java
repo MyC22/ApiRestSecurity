@@ -52,13 +52,11 @@ public class SecurityConfig  {
                     http.requestMatchers("/method/**").hasAnyRole("ADMIN");
                     http.requestMatchers("/api/**").hasAuthority("ROLE_ADMIN");
                     http.requestMatchers("/users/**").hasAuthority("ROLE_ADMIN");
-                    http.requestMatchers("/task/**").hasAuthority("ROLE_ADMIN");
+                    //http.requestMatchers("/task/**").hasAuthority("ROLE_ADMIN");
                     http.requestMatchers("/log/audit/**").hasAuthority("ROLE_ADMIN");
 
                     //http.requestMatchers(HttpMethod.POST, "/method/post").hasAnyRole("ADMIN","DEVELOPER");
 
-                    http.requestMatchers(HttpMethod.PATCH, "/method/patch").hasAnyAuthority("REFACTOR");
-                    http.requestMatchers(HttpMethod.GET, "/method/get").hasAnyAuthority("READ");
 
                     //configure any other endpoints - NOT SPECIFIED
                     http.anyRequest().denyAll();
